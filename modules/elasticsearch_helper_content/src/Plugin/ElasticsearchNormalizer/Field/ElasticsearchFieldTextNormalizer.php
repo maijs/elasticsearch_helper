@@ -4,8 +4,10 @@ namespace Drupal\elasticsearch_helper_content\Plugin\ElasticsearchNormalizer\Fie
 
 use Drupal\Core\Field\FieldItemInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Renderer;
 use Drupal\elasticsearch_helper_content\ElasticsearchDataTypeDefinition;
 use Drupal\elasticsearch_helper_content\ElasticsearchFieldNormalizerBase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @ElasticsearchFieldNormalizer(
@@ -25,9 +27,37 @@ use Drupal\elasticsearch_helper_content\ElasticsearchFieldNormalizerBase;
 class ElasticsearchFieldTextNormalizer extends ElasticsearchFieldNormalizerBase {
 
   /**
+   * @var \Drupal\Core\Render\Renderer
+   */
+  protected $renderer;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $instance->setRenderer($container->get('renderer'));
+    return $instance;
+  }
+
+  /**
+   * Sets renderer service.
+   *
+   * @param \Drupal\Core\Render\Renderer $renderer
+   */
+  public function setRenderer(Renderer $renderer) {
+    $this->renderer = $renderer;
+  }
+
+
+  /**
    * {@inheritdoc}
    */
   public function getFieldItemValue(FieldItemInterface $item, array $context = []) {
+    if ($this->configuration['render_value']) {
+      $field_render = $item->view($this->configuration['render_view_mode']);
+      return $this->renderer->renderRoot($field_render);
+    }
     return $item->get('value')->getValue();
   }
 
@@ -85,7 +115,7 @@ class ElasticsearchFieldTextNormalizer extends ElasticsearchFieldNormalizerBase 
         ],
         '#default_value' => $this->configuration['storage_method'],
       ],
-    ];
+    ] + parent::buildConfigurationForm($form, $form_state);
   }
 
   /**
@@ -93,6 +123,7 @@ class ElasticsearchFieldTextNormalizer extends ElasticsearchFieldNormalizerBase 
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['storage_method'] = $form_state->getValue('storage_method');
+    parent::submitConfigurationForm($form, $form_state);
   }
 
 }

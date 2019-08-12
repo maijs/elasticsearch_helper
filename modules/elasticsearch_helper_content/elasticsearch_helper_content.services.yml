@@ -23,3 +23,7 @@ services:
 
   elasticsearch_helper_content.elasticsearch_data_type_repository:
     class: Drupal\elasticsearch_helper_content\ElasticsearchDataTypeRepository
+
+  elasticsearch_helper_content.normalizer_helper:
+    class: Drupal\elasticsearch_helper_content\ElasticsearchNormalizerHelper
+    arguments: ['@entity_type.manager', '@entity_display.repository']

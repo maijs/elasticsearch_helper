@@ -114,6 +114,8 @@ class ElasticsearchEntityFieldNormalizer extends ElasticsearchEntityNormalizerBa
         // If field name maps to an entity key, use entity key.
         $entity_field_name = isset($entity_keys[$field_name]) ? $entity_keys[$field_name] : $field_name;
 
+        $this->setNormalizerConfiguration($field_configuration);
+
         $instances[$field_name] = $this->createFieldNormalizerInstance($field_configuration['normalizer'], $field_configuration['normalizer_configuration'], $entity_field_name);
       }
     }
@@ -244,6 +246,8 @@ class ElasticsearchEntityFieldNormalizer extends ElasticsearchEntityNormalizerBa
           'normalizer' => key($field_normalizer_definitions),
           'normalizer_configuration' => [],
         ];
+
+        $this->setNormalizerConfiguration($field_configuration);
 
         $row_id = [$field_name];
         $form_field_row = &$form['fields'][$field_name];
@@ -523,6 +527,18 @@ class ElasticsearchEntityFieldNormalizer extends ElasticsearchEntityNormalizerBa
     }
 
     $this->configuration = $configuration;
+  }
+
+  /**
+   * Sets normalizer configuration
+   *
+   * @param $configuration
+   */
+  protected function setNormalizerConfiguration(&$configuration) {
+    // Explicitly set entity type and bundle. They are unset in field
+    // normalizer plugins and are not stored in configuration.
+    $configuration['normalizer_configuration']['entity_type'] = $this->targetEntityType;
+    $configuration['normalizer_configuration']['bundle'] = $this->targetBundle;
   }
 
 }
